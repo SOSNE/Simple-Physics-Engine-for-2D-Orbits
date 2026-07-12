@@ -1,16 +1,128 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class CustomPhysicsManager : MonoBehaviour
 {
+    public static CustomPhysicsManager Instance;
+    public List<CustomPhysicsBody> physicsBodies = new List<CustomPhysicsBody>();
+
+    public float testForcePower;
+    private Vector2 _testForce;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    void Awake()
     {
+        if (Instance == null)
+        {
+            Instance = this;
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
+
+    private void FixedUpdate()
+    {
+        if (Keyboard.current != null) // Safety check to make sure a keyboard is plugged in
+        {
+            if (Keyboard.current.aKey.isPressed)
+            {
+                _testForce.y = testForcePower;
+            }
+            else
+            {
+                _testForce.y = 0f;
+            }
+        }
+        RunPhysicsLoop();
+    }
+
+    private void RunPhysicsLoop()
+    {
+        if (physicsBodies.Count == 0) return;
+        float dt = Time.deltaTime;
+        
+        int count = physicsBodies.Count;
+
+        for (int i = 0; i < count; i++)
+        {
+            if (count != 1)
+            {
+                for (int j = i + 1; j < count; j++)
+                {
+                    CustomPhysicsBody body1 = physicsBodies[i];
+                    CustomPhysicsBody body2 = physicsBodies[j];
+
+                    Vector2 gravity = GetGravityForce(body1, body2);
+
+
+                    Vector2 force1 = CombineForces(gravity, _testForce);
+                    ApplyForceToBody(body1, force1, dt);
+
+                    Vector2 force2 = CombineForces(-gravity);
+                    ApplyForceToBody(body2, force2, dt);
+
+                }
+            }
+            else
+            {
+                CustomPhysicsBody body1 = physicsBodies[0];
+                Vector2 force1 = CombineForces(_testForce);
+                ApplyForceToBody(body1, force1, dt);
+            }
+        }
+        
+        // Future steps will go here:
+        // 1. Reset Accelerations
+        // 2. Calculate Gravity Forces
+        // 3. Integrate Positions
+        // 4. Update Transforms
         
     }
 
-    // Update is called once per frame
-    void Update()
+    private Vector2 GetAcceleration(Vector2 force, double mass)
     {
+        return force / (float)mass;
+    }
+    private Vector2 GetVelocity(Vector2 acceleration, float dt)
+    {
+        return acceleration * dt;
+    }
+    private Vector2 GetPosition(Vector2 velocity,float dt)
+    {
+        return velocity * dt;
+    }
+
+    private void ApplyForceToBody(CustomPhysicsBody body, Vector2 force, float dt)
+    {
+        body.acceleration = GetAcceleration(force, body.mass);
+        body.velocity += GetVelocity(body.acceleration, dt);
+        body.physicsPosition += GetPosition(body.velocity, dt);
         
+        body.UpdateTransform();
+    }
+    
+    public Vector2 CombineForces(params Vector2[] forces)
+    {
+        Vector2 netForce = Vector2.zero;
+
+        for (int i = 0; i < forces.Length; i++)
+        {
+            netForce += forces[i];
+        }
+
+        return netForce;
+    }
+
+    private Vector2 GetGravityForce(CustomPhysicsBody body1, CustomPhysicsBody body2)
+    {
+        float G = 6.674f; // Your custom gravity constant
+    
+        Vector2 direction = body2.physicsPosition - body1.physicsPosition;
+        float r = direction.magnitude;
+
+        return (float)(G * (body2.mass + body1.mass)) / (r * r) * direction.normalized;
     }
 }
