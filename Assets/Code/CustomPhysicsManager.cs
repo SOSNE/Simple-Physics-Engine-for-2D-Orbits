@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -20,6 +21,23 @@ public class CustomPhysicsManager : MonoBehaviour
         else
         {
             Destroy(gameObject);
+        }
+    }
+    void Update()
+    {
+        if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
+        {
+            CustomPhysicsBody clickedBody = Utils.DetectClickedObject();
+
+            if (clickedBody != null)
+            {
+                Debug.Log($"Clicked on: {clickedBody.gameObject.name} with mass: {clickedBody.mass}");
+                
+                // Do whatever you want with the selected body here!
+                // (e.g., store it in a "selectedBody" variable to apply forces or show UI)
+            }
+
+            CameraControl.Target = clickedBody;
         }
     }
 
