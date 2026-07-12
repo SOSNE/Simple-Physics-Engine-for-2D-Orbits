@@ -25,6 +25,19 @@ public class CustomPhysicsManager : MonoBehaviour
     }
     void Update()
     {
+        if (Keyboard.current.digit1Key.isPressed)
+        {
+            if (physicsBodies.Count > 0) CameraControl.Target = physicsBodies[0];
+        }
+        if (Keyboard.current.digit2Key.isPressed)
+        {
+            if (physicsBodies.Count > 1) CameraControl.Target = physicsBodies[1];
+        }
+        if (Keyboard.current.digit3Key.isPressed)
+        {
+            if (physicsBodies.Count > 2) CameraControl.Target = physicsBodies[2];
+        }
+        
         if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
         {
             CustomPhysicsBody clickedBody = Utils.DetectClickedObject();
