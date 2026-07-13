@@ -23,6 +23,24 @@ public class CustomPhysicsManager : MonoBehaviour
             Destroy(gameObject);
         }
     }
+
+    void Start()
+    {
+        CustomPhysicsBody body1 = physicsBodies[0];
+        CustomPhysicsBody body2 = physicsBodies[1];
+        
+
+        // Vector2 gravity = GetGravityForce(body1, body2);
+        
+        print(body1.name);
+        
+        Vector2 velocity = GetOrbitingVelocity(body2, body1);
+        body2.velocity = velocity;
+
+        // Vector2 force2 = CombineForces(-gravity);
+        // ApplyForceToBody(body2, force2, dt);
+    }
+
     void Update()
     {
         if (Keyboard.current.digit1Key.isPressed)
@@ -155,5 +173,18 @@ public class CustomPhysicsManager : MonoBehaviour
         float r = direction.magnitude;
 
         return (float)(G * (body2.mass + body1.mass)) / (r * r) * direction.normalized;
+    }
+
+    private Vector2 GetOrbitingVelocity(CustomPhysicsBody body, CustomPhysicsBody bodyAround)
+    {
+        float G = 6.674f;
+        Vector2 direction = bodyAround.physicsPosition - body.physicsPosition;
+        float r = direction.magnitude;
+        if (r < 0.01f) return Vector2.zero;
+        float speed = Mathf.Sqrt((G * (float)bodyAround.mass) / r);
+        Vector2 normalDir = direction.normalized;
+        Vector2 orbitDirection = new Vector2(-normalDir.y, normalDir.x);
+        
+        return speed * orbitDirection;
     }
 }

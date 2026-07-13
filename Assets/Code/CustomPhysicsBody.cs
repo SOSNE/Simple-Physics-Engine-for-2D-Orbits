@@ -9,7 +9,7 @@ public class CustomPhysicsBody : MonoBehaviour
     [HideInInspector] public Vector2 physicsPosition;
     
     // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    void OnEnable()
     {
         physicsPosition = transform.position;
         if (CustomPhysicsManager.Instance != null)
