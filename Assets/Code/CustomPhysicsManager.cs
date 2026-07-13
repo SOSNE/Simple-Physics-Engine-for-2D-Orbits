@@ -34,9 +34,12 @@ public class CustomPhysicsManager : MonoBehaviour
         
         print(body1.name);
         
-        Vector2 velocity = GetOrbitingVelocity(body2, body1);
-        body2.velocity = velocity;
-
+        Vector2 relativeVelocity = GetOrbitingVelocity(body2, body1);
+        
+        float totalMass = (float)(body1.mass + body2.mass);
+        
+        body1.velocity = -relativeVelocity * ((float)body2.mass / totalMass);
+        body2.velocity = relativeVelocity * ((float)body1.mass / totalMass);
         // Vector2 force2 = CombineForces(-gravity);
         // ApplyForceToBody(body2, force2, dt);
     }
@@ -91,7 +94,7 @@ public class CustomPhysicsManager : MonoBehaviour
     private void RunPhysicsLoop()
     {
         if (physicsBodies.Count == 0) return;
-        float dt = Time.deltaTime;
+        float dt = Time.fixedDeltaTime;
         
         int count = physicsBodies.Count;
 
@@ -107,12 +110,11 @@ public class CustomPhysicsManager : MonoBehaviour
                     Vector2 gravity = GetGravityForce(body1, body2);
 
 
-                    Vector2 force1 = CombineForces(gravity, _testForce);
-                    ApplyForceToBody(body1, force1, dt);
+                    // Vector2 force1 = CombineForces(gravity, _testForce);
+                    ApplyForceToBody(body1, gravity, dt);
 
-                    Vector2 force2 = CombineForces(-gravity);
-                    ApplyForceToBody(body2, force2, dt);
-
+                    // Vector2 force2 = CombineForces(-gravity);
+                    ApplyForceToBody(body2, -gravity, dt);
                 }
             }
             else
@@ -121,6 +123,12 @@ public class CustomPhysicsManager : MonoBehaviour
                 Vector2 force1 = CombineForces(_testForce);
                 ApplyForceToBody(body1, force1, dt);
             }
+        }
+
+        foreach (CustomPhysicsBody body in physicsBodies)
+        {
+            body.physicsPosition += GetPosition(body.velocity, dt);
+            body.UpdateTransform();
         }
         
         // Future steps will go here:
@@ -148,9 +156,9 @@ public class CustomPhysicsManager : MonoBehaviour
     {
         body.acceleration = GetAcceleration(force, body.mass);
         body.velocity += GetVelocity(body.acceleration, dt);
-        body.physicsPosition += GetPosition(body.velocity, dt);
+        // body.physicsPosition += GetPosition(body.velocity, dt);
         
-        body.UpdateTransform();
+        // body.UpdateTransform();
     }
     
     public Vector2 CombineForces(params Vector2[] forces)
@@ -172,7 +180,7 @@ public class CustomPhysicsManager : MonoBehaviour
         Vector2 direction = body2.physicsPosition - body1.physicsPosition;
         float r = direction.magnitude;
 
-        return (float)(G * (body2.mass + body1.mass)) / (r * r) * direction.normalized;
+        return (float)(G * (body2.mass * body1.mass)) / (r * r) * direction.normalized;
     }
 
     private Vector2 GetOrbitingVelocity(CustomPhysicsBody body, CustomPhysicsBody bodyAround)
@@ -181,7 +189,7 @@ public class CustomPhysicsManager : MonoBehaviour
         Vector2 direction = bodyAround.physicsPosition - body.physicsPosition;
         float r = direction.magnitude;
         if (r < 0.01f) return Vector2.zero;
-        float speed = Mathf.Sqrt((G * (float)bodyAround.mass) / r);
+        float speed = Mathf.Sqrt((G * (float)(bodyAround.mass + body.mass)) / r);
         Vector2 normalDir = direction.normalized;
         Vector2 orbitDirection = new Vector2(-normalDir.y, normalDir.x);
         
